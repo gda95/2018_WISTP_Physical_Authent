@@ -1,0 +1,42 @@
+%!TEX root = physical_authent.tex
+\subsection{AES}~\label{ssec:AES}
+The Advanced Encryption Standard (AES)~\cite{FIPS197} is a \del{symmetric} block cipher that processes data blocks of $128$ bits length and a variable secret key length ($128$, $192$ or $256$ bits). Hence, as specified by the standard~\cite{FIPS197}, three different block-ciphers can be used: AES-$128$, AES-$192$, AES-$256$.
+Depending on the length of the key, the AES performs $N_r$ rounds, with $N_r \in [10, 12, 14 ]$. The AES manipulates, all along its execution, an internal state which is a $(4 \times 4) $ matrix of bytes.
+
+\begin{algorithm}[ht!]
+	\caption{The Advanced Encryption Standard (AES)}\label{alg:AES}
+	\begin{algorithmic}[1]
+	\Require{$In$: the $128$-bit input, $N_r$: the number of rounds, $(k_i)_{0 \leq i \leq  N_r}$: the round keys}
+	\Ensure{$Out$: the $128$-bit output}
+	\State $M_{-1} = In$	
+	\For{$i = 0 \textbf{ to } N_r-2$}
+		\State $X_i = \mbox{AddRoundKey}(M_{i-1},k_{i})$
+		\State $Y_i = \mbox{SubBytes}(X_{i})$
+		\State $S_i = \mbox{ShiftRows}(Y_{i})$
+		\State $M_i = \mbox{MixColumns}(S_i)$
+    \EndFor
+    \State $X_{N_r-1} = \mbox{AddRoundKey}(M_{N_r-2}, k_{N_r-1})$
+   	\State $Y_{N_r-1} = \mbox{SubBytes}(X_{N_r-1})$
+	\State $S_{N_r-1} = \mbox{ShiftRows}(Y_{N_r-1})$
+	\State $Out = X_{N_r} = \mbox{AddRoundKey}(S_{N_r-1}, k_{N_r})$
+	\State \Return $Out$
+  	\end{algorithmic}
+\end{algorithm}
+
+The AES involves four main operations: AddRoundKey, SubBytes, ShiftRows and MixColumns. As shown in Algorithm~\ref{alg:AES}, at the $i^{\text{th}}$ round these operations yield the so-called intermediate states of the AES and are denoted resp. by $X_i$, $Y_i$, $S_i$ and $M_i$. A byte from an intermediate state, say $X_i$, is denoted by ${X_i[l,c]}$ with $(l,c) \in {[0,3]}^2$ in the sequel.
+
+
+\subsection{Leakage Model}\label{ssec:leak}
+Let $V$ be a sensitive byte (\emph{e.g.} the variable $Y_i[l,c]$ of the $i^{\text{th}}$ AES round), then it is often assumed that the leakage function $L(V)$ is well modeled by:
+\begin{equation}
+L(V) = \alpha_t \cdot \mbox{HW}(V) + \beta_t + W \enspace , \text{where:}
+\label{eq:leak}
+\end{equation}
+
+\begin{enumerate}
+\item $ \text{HW}(.)$ is the Hamming Weight function.
+\item $W$ is a Gaussian noise $\mathcal{N}(0,\sigma)$ with null mean and standard deviation $\sigma$.
+\item $(\alpha_t, \beta_t)$ are some weighting values specific to each targeted sensitive byte of index $(l,c)$ of the $i^{\text{th}}$ AES round (\emph{i.e.} $t = (l,c,i)$).
+\end{enumerate}  
+
+\add{It is worthy to note that, in some specific cases, the real leakage function can be slightly different from the model we considered in~\eqref{eq:leak}. In such a case, one have to characterize the real leakage function by applying a \textit{stochastic approach} as suggested in~\cite{10.1007/11545262_3}. For the sake of simplicity, we assume that leakage function follows the model described in~\eqref{eq:leak}. In the meantime, we stress the fact that our proposal works well with any leakage function.}

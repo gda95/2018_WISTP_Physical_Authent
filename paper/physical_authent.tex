@@ -1,0 +1,140 @@
+\RequirePackage{mathtools}
+\documentclass{llncs}
+\pagestyle{plain}
+%%%%%%%%%%%%%%%%%%%% Graphicx %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[caption=false]{subfig}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%% ALGORITHMIC STUFF %%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\newcommand*\Let[2]{\State #1 $\gets$ #2}
+\newtheorem{assumption}{Assumption}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%% THEOREM STUFF %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{url}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\graphicspath{{../pics/}{../pics/new_fig/}}
+
+%\usepackage{ulem}
+%\newcommand\add[1]{\textcolor{olive}{#1}} 
+\newcommand\del[1]{\textcolor{red}{#1}} 
+\newcommand\add[1]{\textcolor{blue}{#1}} 
+%\newcommand\rep[2]{\textcolor{red}{\sout{#1}}\textcolor{olive}{#2}}
+
+\usepackage{todonotes}
+\usepackage{soul}
+%\newcommand{\hlfix}[2]{\todo{#2}{\texthl{#1}}}
+%\newcommand{\aldid}[2]{\todo[backgroundcolor=blue!20]{AL : #2}{\texthl{#1}}}
+%\newcommand{\gdadid}[2]{\todo[backgroundcolor=blue!41]{GDA : #2}{\texthl{#1}}}
+
+\title{On the Bright Side of Darkness: \\
+Side-Channel Based Authentication Protocol Against Relay Attacks}
+\author{Anonymous submission to WISTP 2018}
+\institute{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Relay attacks are nowadays well known and most designers of secure authentication protocols are aware of them. At present, the main methods to prevent these attacks are based on the so-called distance bounding technique which consists in measuring the round-trip time of the exchanged authentication messages between the prover and the verifier to estimate an upper
+bound on the distance between these entities. 
+Based on this bound, the verifier checks if the prover is sufficiently close by to rule out an unauthorized entity.
+Recently, a new work has proposed an authentication protocol that surprisingly uses the side-channel leakage to prevent relay attacks. 
+In this paper, we exhibit some practical and security issues of this protocol and provide a new one that fixes all of them. 
+Then, we argue the resistance of our proposal against both side-channel and relay attacks under some realistic assumptions. 
+Our experimental results show the efficiency of our protocol in terms of false acceptance and false rejection rates.
+
+\end{abstract}
+{\bf Keywords:} authentication protocol, relay attacks, side-channel attacks, physical leakage. 
+
+\section{Introduction}
+\subsubsection{Relay Attacks VS Authentication Protocols.}
+A \textit{relay attack} is a form of \textit{man-in-the-middle} attack where the attacker merely relays the verbatim messages between a verifier and a prover, to authenticate to the verifier as a legitimate prover. In such a context, the attacker is usually close to the verifier and claims being the legitimate prover while the latter is not in the neighborhood. Such an attack is particularly well-suited to get around access controls, \emph{e.g.} to get inside a secure location or to unlock the doors of a vehicle.
+Without loss of generality, we shall consider in the sequel that the prover is a contactless Secure Element (SE) and the verifier is a contactless reader. 
+
+The current trend to include Near Field Communication (NFC) (ISO/IEC $14443$) technology into mobile phones significantly simplifies skimming and relay attacks. Although the NFC protocol requires that the prover and the verifier are in close proximity, this constraint does not help to counteract relay attacks. Indeed, in \cite{Hancke05apractical} it is shown how to set up a relay attack by placing a {\em proxy-token} in the range of a contactless reader to relay queries from the verifier to a {\em mole} which forwards to the genuine prover the requests from the genuine verifier. The mole also sends back the responses from the genuine prover to the proxy-token which delivers them to the genuine verifier. Most recently the authors in \cite{DBLP:journals/iacr/FrancisHMM11,MendozaNFC} have shown how smartphones equipped with an NFC antenna can be used efficiently as a generic relay attack platform.
+
+To thwart relay attacks, Brands and Chaum introduced in $1993$ the so-called \textit{distance bounding protocols}~\cite{Brands1994}.
+
+The core idea of these protocols is to measure the round-trip time of the authentication messages exchanged between the prover and the verifier. Then, based on this propagation time, the verifier decides whether the prover is within the distance and hence discriminates a legitimate prover from an attacker.
+Although the idea has been introduced many years ago, it is only quite recently that distance bounding protocols have been investigated and several designs have been 
+proposed in the literature~\cite{DBLP:conf/fps/BrelurutGL15,DBLP:conf/wisec/TippenhauerLKC15}.
+
+\subsubsection{On the Bright Side of Side-Channel Leakage.}
+Before detailing our proposal, we provide in this section a survey of some recent research lines suggesting the use of side-channel information constructively to enhance, or as an alternative to, existing cryptographic protocols.
+	
+To avoid counterfeiting of Integrated Circuits (ICs), authors in \cite{DBLP:conf/socc/MarchandBJ14} have proposed a watermarking based technique. It consists in inserting a software manipulating a sensitive variable which simply computes the Exclusive-OR (XOR) operation between an internal $8$-bit counter and an $8$-bit secret key and then applies the Sbox of the AES to the result of the XOR. The internal counter increases its value on each run of the software. 
+To check whether a device is genuine or not, the issuer of the device provides a reference device containing the same software as in the device under test (if the latter is not a counterfeit). By measuring several power traces from both devices and then by computing the degree of correlation between their respective leakages, the issuer can conclude that the audited device is a legal copy if the correlation is sufficiently high (\emph{i.e.} greater than a fixed threshold). 
+Unfortunately, the authors only use an $8$-bit length key. Moreover, each time it is required to check the authenticity of a device, the internal $8$-bit counter is reset on both devices (the device under test as well as the reference device), making the sequence predictable and subject to side-channel attacks\footnote{If the reset value of the internal counter is unknown to the attacker, she must recover it, which is far from being an issue since it is only an $8$-bit value.}. 
+
+In another work, Kerckhof \emph{et al.} in \cite{DBLP:conf/host/KerckhofDSG13} have used some techniques from side-channel analysis still in the context of IP protection. 
+The typical use case on which they have focused on is the implementation of some customized ciphering algorithms. 
+An estimation of the coefficient of correlation is again used but now (despite of the context of symmetric ciphers), no sensitive variable is involved in the computation of the correlation. 
+The authors have rather used the correlation as a tool to correlate features extracted from an acquired signal (which represents the execution of a specific implementation without paying attention to the manipulated data) with features extracted from a reference device embedding the same IP as in the device under test. 
+Several other works have suggested to use side channel for IC fingerprinting or Trojan detection~\cite{7256167,10.1007/978-3-642-15031-9_12}. \del{In most of the cases, it is required to have a reference design to exploit the leakage.}
+
+
+To avoid relay attacks, authors in~\cite{SakiyamaMMKHMMN15} and \cite{DBLP:conf/ccs/ReidNTS07} have proposed authentication protocols based on the use of physical leakage.
+In \cite{DBLP:conf/ccs/ReidNTS07}, the authors simply suggested the use of a dedicated binary xor instruction which, depending on the resulting bit, leaks exaggeratedly (\emph{e.g.} if the resulting bit is $1$) or not (\emph{e.g.} if the resulting bit is $0$). Such a technique allows the authors to only use a so-called simple side-channel analysis.
+In \cite{SakiyamaMMKHMMN15}, the prover performs on his side some cryptographic computations while the verifier acquires the corresponding physical leakage (\emph{e.g.} the electromagnetic radiation).
+Assuming that the verifier and the prover share a symmetric key $K$, the verifier analyses the leakage generated by a nearby SE and authenticates it ``physically'' if the correlation between the acquired leakage and the associated predictions made by the verifier is sufficiently high. Such an authentication associating classical authentication techniques with statistical side-channel analysis is called \textit{side-channel authentication}.  
+\add{According to us, this new paradigm is really interesting since it may indeed allow to detect relay attacks in the field. The fact that it is required to acquire the electro-magnetic signal of the prover (which is is typically a smartcard) may not be unrealistic depending on the considered use case. We acknowledge that adding the means for signal acquisition in a so-called  payment terminal is probably not an option. This situation is not so clear when talking about relay attacks on car immobilizers (where the key is more or less a smartcard) or when talking about control access to a public transport network. In both cases it would surely be possible to embed an equipment to acquire the leakage of the prover: inside the driver's door of the car and inside the entrance gate to the public transport network. Of course this countermeasure comes at a price and its implementation will depend on how relay attacks impact the overall fraud.}
+%This is because the leakage of the SE can be acquired by the verifier if the SE is physically nearby the verifier.
+
+\subsubsection{Our Contribution.}
+In this work, we propose a new authentication protocol that $(1)$ follows the side-channel based approach suggested in \cite{SakiyamaMMKHMMN15} and \cite{DBLP:conf/ccs/ReidNTS07} and $(2)$ fixes its practical and security issues that we detail hereafter.
+According to our understanding, in \cite{SakiyamaMMKHMMN15} the authors propose four schemes in which both parties, the prover and the verifier, share a symmetric key $K$ that is used to perform AES computations (on both sides) using this secret key. The inputs of the AES computations are specified differently depending on the design that is considered. The main drawback of their proposal is that a customized $N$-round AES is required ($N=1.000$ rounds in their experiments). 
+
+From a design point of view, this design constraint raises an issue because in the context of secure element only standardized cryptographic primitives should be considered (\emph{i.e.} AES-$128$, AES-$192$ and AES-$256$). 
+From a security perspective, the protocol proposed in \cite{SakiyamaMMKHMMN15} has some flaws that could be exploited by performing some side-channel attacks. The proposed $N$-round AES implementations are not protected against side-channel attacks. So, an adversary who can recover the physical leakage, is able to perform a statistical attack to recover the shared master key $K$.
+The reason behind not using the well-known side-channel countermeasures (\emph{e.g.} masking, secret sharing) is that the leaked information is no longer exploitable and so the physical authentication cannot succeed.  
+
+Finally, from a practical perspective, assuming that the leakage model is uniform over the whole intermediate values of the $N$-round customized AES~\cite{SakiyamaMMKHMMN15} is unsound in real hardware due to small load imbalances, process variations, routing, \emph{etc}. For instance, authors in~\cite{10.1007/978-3-642-42033-7_26} have characterized using a stochastic approach the leakage of four successive AES Sbox outputs.
+The obtained results prove that the leakage is very unbalanced for each Sbox. Hence, in practice the authentication may fail since the correlation between the acquired leakage and the associated predictions may be too low when following such assumption on the leakage model.
+
+To overcome these issues and to resist relay attacks, we propose a new authentication protocol that first ensures that only a genuine verifier can exploit the leakage from a prover, \emph{i.e.} no attacker should be able to mount an attack based on side-channel analysis to recover the secret key $K$. Second, this protocol only uses standard cryptographic primitives (\emph{i.e.} AES-$128$, AES-$192$ or AES-$256$).
+
+Throughout several practical experiments (see Sec.~\ref{sec:simu}), we argue that our proposal is secure against both side-channel attacks and relay attacks under some realistic assumptions.
+
+\subsubsection{Paper Outline.}
+The paper is organized as follows. In Sec.~\ref{sec:background}, we briefly describe the AES block cipher and provide some useful notations. Then, in Sec.~\ref{sec:protocol} we describe our new authentication protocol. To assess the efficiency of our proposal, a practical security evaluation is conducted in Sec.~\ref{sec:simu}. Finally, Sec.~\ref{sec:conc} draws general conclusions and opens some perspectives for future work.
+
+\section{Background}\label{sec:background}
+
+\input{background.tex}
+
+\section{Protocol Proposal}\label{sec:protocol}
+\input{protocol.tex}
+
+
+\subsection{Self-Assessment Evidence}\label{ssec:security}
+\paragraph{From side-channel analysis perspective.} The security of our protocol relies on the countermeasures that should be implemented to protect the secure KDF, which is can be based on the AES primitive for instance. To achieve this, one can take advantage of the several provably secure higher-order masking schemes that have been proposed in the literature~\cite{DBLP:conf/eurocrypt/Coron14,DBLP:conf/ches/GenellePQ11,DBLP:conf/ches/RivainP10}. So, the idea is to counteract an attacker trying to recover the shared master key by side-channel analysis.
+ 
+\paragraph{From relay attack perspective.}
+An attacker performing a relay attack must deal with the so-called round time trip which is the sum of two components of time: the processing time of the devices involved in the relay attack (genuine and malicious ones) and the communication times between all the involved devices. In the context of contactless cards, it is quite challenging to keep a low latency communication between contactless devices. Because of this non-negligible latency, the authors in \cite{DBLP:conf/ccs/ReidNTS07} show that an attacker can connect a proxy-token to a mole with a high-speed link so that the communication time, denoted $\epsilon$ is close to $0$ and thus defeating all classical distance-bounding protocols, i.e. protocols based on round time trip computations. The reason is that the processing times of malicious devices can be hidden in the error-time margins of the round time trip.
+Hopefully, still in \cite{DBLP:conf/ccs/ReidNTS07}, the authors show that using side-channel analysis allows to dramatically reduce this latency since the verifier can watch the prover in real time. So, the verifier is somehow plugged to the prover's brain while this latter is 'thinking', \emph{i.e.} computing.
+In the protocol we proposed in Fig.~\ref{fig:protocol}, the verifier sends data blocks to the prover though the contactless interface. Once he has received the last expected acknowledgment from the prover, it can immediately plug to the prover's brain, \emph{i.e.} start to acquire the prover's leakage induced by the cryptographic computations on the prover side. If the prover is a genuine one, the protocol will work properly while if it is a proxy-token one, the situation is clearly different. Indeed, denote by $\Delta$ the communication time required to exchange data between the verifier and a prover (genuine or not). If the prover is a fake one (\emph{i.e.} a proxy-token), it is unavoidable for the attacker to spend a second communication time of $\Delta$ to exchange data between the mole and the genuine prover. Thus, even if the communication time $\epsilon$ between the proxy-token and the mole is negligible, the attacker relays the leakage from the genuine prover to the genuine verifier in time $2  \times\Delta$ instead of $\Delta$ when the genuine prover is in the proximity of the verifier. By doing so, the attacker relays a leakage which is desynchronized from the point of view of the genuine verifier. Therefore, the correlation coefficient computed on the verifier side will be too low to allow the authentication to succeed. Thus, as stated in Assumption~\ref{assump_2}, we considered as impractical for an attacker to relay physical leakage.
+
+
+\section{Experimental Validation}\label{sec:simu}
+\input{experiments.tex}
+
+\section{Conclusion}\label{sec:conc}
+This work highlights the bright side of side-channel leakage. The traditional doctrine has always exhibited this leakage as a serious practical threat to cryptographic embedded systems. In this paper, we have introduced a new authentication protocol that constructively exploits the side-channel leakage to prevent relay attacks. To be authenticated, the prover performs some cryptographic operations using a beforehand shared master key (either loaded during the personalization phase of the prover or more simply by using the classical Diffie-Hellman key exchange protocol). The verifier eavesdrops the resulting physical leakage and computes the likelihood using the corresponding theoretical predictions. 
+When the resulting likelihood is quite high (with respect to the considered proximity criterion) then the prover could be accepted after a last step of validation by exchanging some ciphertexts.
+We have argued and confirmed with experiments, that our proposal is secure against both side-channel attacks and relay attacks. Moreover, it solves some security and design issues pinpointed in a previous study~\cite{SakiyamaMMKHMMN15}. Besides, through our experimental validation, we have demonstrated the efficiency of our proposal in terms of FAR and FRR.
+       
+In view of these promising results, a natural open problem is to validate our proposal in an even more realistic scenario by exploiting for example the electromagnetic leakage captured on a modern smart-card chip.
+
+\bibliographystyle{plain}
+\bibliography{physical_authent}
+
+\end{document}
